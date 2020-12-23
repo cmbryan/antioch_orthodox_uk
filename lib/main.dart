@@ -6,9 +6,6 @@ void main() async {
   // Need to do this before accessing the binary messenger during intialization
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Get the readings databse object
-  final db = await DbHelper().initDb();
-
   runApp(MyApp());
 }
 
@@ -17,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Antioch Orthodox UK App',
       theme: ThemeData(
         // This is the theme of your application.
         primarySwatch: Colors.red,
@@ -50,16 +47,27 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  DbHelper dbHelper;
+  var readings;
+  var readingText = "Unintialized";
   int _counter = 0;
 
-  void _incrementCounter() {
+  void _incrementCounter() async {
+    // Get the readings databse object
+    if (this.dbHelper == null) {
+      this.dbHelper = DbHelper();
+      await dbHelper.init();
+      this.readings = await dbHelper.getReadings();
+    }
+
     setState(() {
       // This call to setState tells the Flutter framework that something has
       // changed in this State, which causes it to rerun the build method below
       // so that the display can reflect the updated values. If we changed
       // _counter without calling setState(), then the build method would not be
       // called again, and so nothing would appear to happen.
-      _counter++;
+      this._counter = (this._counter + 1) % 4;
+      this.readingText = this.readings[this._counter].text;
     });
   }
 
@@ -98,11 +106,11 @@ class _MyHomePageState extends State<MyHomePage> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
             Text(
-              'You have pushed the button this many times:',
+              'Click on the button to advance the reading',
             ),
             Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+              this.readingText,
+              // style: Theme.of(context).textTheme.headline4,
             ),
           ],
         ),
