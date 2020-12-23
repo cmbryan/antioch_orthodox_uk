@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
 
-void main() {
+import 'dbhelper.dart';
+
+void main() async {
+  // Need to do this before accessing the binary messenger during intialization
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Get the readings databse object
+  final db = await DbHelper().initDb();
+
   runApp(MyApp());
 }
 
