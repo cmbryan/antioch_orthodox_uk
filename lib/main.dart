@@ -49,10 +49,10 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   DbHelper dbHelper;
   var readings;
-  var readingText = "Unintialized";
-  int _counter = 0;
+  DateTime selectedDate = DateTime.now();
+  var readingText = 'TODO';
 
-  void _incrementCounter() async {
+  void _chooseReading() async {
     // Get the readings databse object
     if (this.dbHelper == null) {
       this.dbHelper = DbHelper();
@@ -60,15 +60,19 @@ class _MyHomePageState extends State<MyHomePage> {
       this.readings = await dbHelper.getReadings();
     }
 
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      this._counter = (this._counter + 1) % 4;
-      this.readingText = this.readings[this._counter].text;
-    });
+    final DateTime picked = await showDatePicker(
+      context: context,
+      initialDate: selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2025),
+    );
+
+    if (picked != null /*&& picked != selectedDate*/) {
+      setState(() {
+        selectedDate = picked;
+        this.readingText = 'TODO $selectedDate';
+      });
+    }
   }
 
   @override
@@ -105,9 +109,9 @@ class _MyHomePageState extends State<MyHomePage> {
           // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'Click on the button to advance the reading',
-            ),
+            // Text(
+            //   'Click on the button to advance the reading',
+            // ),
             Text(
               this.readingText,
               // style: Theme.of(context).textTheme.headline4,
@@ -116,9 +120,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
+        onPressed: _chooseReading,
+        tooltip: 'Choose data',
+        child: Icon(Icons.date_range),
       ), // This trailing comma makes auto-formatting nicer for build methods.
     );
   }
