@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_html/flutter_html.dart';
 
+import 'Reading.dart';
 import 'dbhelper.dart';
 
 void main() async {
@@ -48,7 +50,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   DbHelper dbHelper;
-  var readings;
+  Reading readings;
   DateTime selectedDate = DateTime.now();
   var readingText = 'TODO';
 
@@ -57,20 +59,20 @@ class _MyHomePageState extends State<MyHomePage> {
     if (this.dbHelper == null) {
       this.dbHelper = DbHelper();
       await dbHelper.init();
-      this.readings = await dbHelper.getReadings();
     }
 
-    final DateTime picked = await showDatePicker(
+    selectedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime(2000),
-      lastDate: DateTime(2025),
+      firstDate: DateTime(2020),
+      lastDate: DateTime(2030),
     );
 
-    if (picked != null /*&& picked != selectedDate*/) {
+    this.readings = await dbHelper.getEpistleReadings(selectedDate);
+
+    if (selectedDate != null) {
       setState(() {
-        selectedDate = picked;
-        this.readingText = 'TODO $selectedDate';
+        this.readingText = this.readings.text;
       });
     }
   }
@@ -90,34 +92,10 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
-        child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            // Text(
-            //   'Click on the button to advance the reading',
-            // ),
-            Text(
-              this.readingText,
-              // style: Theme.of(context).textTheme.headline4,
-            ),
-          ],
-        ),
+        child: SingleChildScrollView(
+            child: Html(
+          data: this.readingText,
+        )),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _chooseReading,

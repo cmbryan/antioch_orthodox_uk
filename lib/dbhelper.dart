@@ -1,17 +1,19 @@
 import 'dart:io';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'orm.dart';
+import 'Reading.dart';
 
 class DbHelper {
   Database db;
 
   Future init() async {
+    final dbName = 'YOCal_Master.db';
     var databasesPath = await getDatabasesPath();
-    var path = join(databasesPath, "readings.db");
+    var path = join(databasesPath, dbName);
 
     // Check if the database exists
     var exists = await databaseExists(path);
@@ -24,7 +26,7 @@ class DbHelper {
       await Directory(dirname(path)).create(recursive: true);
 
       // Copy from asset
-      ByteData data = await rootBundle.load(join("assets", "readings.db"));
+      ByteData data = await rootBundle.load(join("assets", dbName));
       List<int> bytes =
           data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes);
 
@@ -42,19 +44,25 @@ class DbHelper {
     // (await db.query('sqlite_master', columns: ['type', 'name'])).forEach((row) {
     //   print(row.values);
     // });
-    // (await db.query('readings', columns: ['code', 'text'])).forEach((row) {
-    //   print(row.values);
-    // });
   }
 
-  Future<List<Reading>> getReadings() async {
-    final List<Map<String, dynamic>> maps =
-        await this.db.query('readings', columns: ['code', 'text']);
-    return List.generate(maps.length, (i) {
-      return Reading(
-        code: maps[i]['code'],
-        text: maps[i]['text'],
-      );
-    });
+  Future<Reading> getEpistleReadings(DateTime date) async {
+    // Convert DateTime to String
+    final format = DateFormat('yyyy-MM-dd');
+    final dateStr = format.format(date);
+
+    // Map of column names to values
+    final List<Map<String, dynamic>> map = await this.db.rawQuery('''
+          SELECT lect_1, text_1
+            FROM yocal_lections
+            JOIN yocal_main ON yocal_main.a_code = yocal_lections.code
+            WHERE date='$dateStr';
+        ''');
+
+    try {
+      return Reading.fromMap(map.first);
+    } catch (Exception) {
+      return null;
+    }
   }
 }

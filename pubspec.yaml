@@ -25,6 +25,8 @@ dependencies:
     sdk: flutter
   sqflite:
   path:
+  intl:  # for DateFormat
+  flutter_html:
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -58,7 +60,7 @@ flutter:
   # https://flutter.dev/assets-and-images/#from-packages
 
   assets:
-    - assets/readings.db
+    - assets/YOCal_Master.db
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a
