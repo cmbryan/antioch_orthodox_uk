@@ -5,12 +5,16 @@ import 'package:intl/intl.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
-import 'Reading.dart';
+import 'Readings.dart';
 
 class DbHelper {
   Database db;
 
   Future init() async {
+    if (db != null) {
+      return;
+    }
+
     final dbName = 'YOCal_Master.db';
     var databasesPath = await getDatabasesPath();
     var path = join(databasesPath, dbName);
@@ -46,23 +50,21 @@ class DbHelper {
     // });
   }
 
-  Future<Reading> getEpistleReadings(DateTime date) async {
+  Future<Readings> getEpistleReadings(DateTime date) async {
     // Convert DateTime to String
     final format = DateFormat('yyyy-MM-dd');
     final dateStr = format.format(date);
 
     // Map of column names to values
     final List<Map<String, dynamic>> map = await this.db.rawQuery('''
-          SELECT date, lect_1, text_1
-            FROM yocal_lections
-            JOIN yocal_main ON yocal_main.a_code = yocal_lections.code
-            WHERE date='$dateStr';
-        ''');
-
-    try {
-      return Reading.fromMap(map.first);
-    } catch (Exception) {
-      return null;
-    }
+      SELECT ord, month, year, lect_1, text_1, lect_2, text_2
+      FROM yocal_lections lect
+      JOIN yocal_main
+        ON a_code = lect.code
+        OR g_code = lect.code
+        OR c_code = lect.code
+      WHERE date = "$dateStr"
+    ''');
+    return Readings.fromMaps(map);
   }
 }

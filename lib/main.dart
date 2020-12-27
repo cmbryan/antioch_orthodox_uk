@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
 
-import 'Reading.dart';
+import 'Readings.dart';
 import 'dbhelper.dart';
 
 void main() async {
@@ -50,37 +50,31 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   DbHelper dbHelper;
-  Reading readings;
+  Readings readings;
   DateTime selectedDate = DateTime.now();
-  var readingText = 'TODO';
 
-  void _chooseReading() async {
-    if (this.dbHelper == null) {
-      // Initialize the readings database object
-      this.dbHelper = DbHelper();
-      await dbHelper.init();
-    }
+  _MyHomePageState() {
+    this.dbHelper = DbHelper();
+    _displayReadings();
+  }
 
+  void _chooseReadings() async {
     selectedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
       firstDate: DateTime(2020),
       lastDate: DateTime(2030),
     );
+    _displayReadings();
+  }
 
+  void _displayReadings() async {
     if (selectedDate != null) {
-      try {
-        this.readings = await dbHelper.getEpistleReadings(selectedDate);
-        setState(() {
-          this.readingText = this.readings.text;
-        });
-      } catch (err) {
-        print('Error getting Epistle reading: $err');
-        this.readings = null;
-        setState(() {
-          this.readingText = this.readings.text;
-        });
-      }
+      await dbHelper.init();
+      var newReadings = await dbHelper.getEpistleReadings(selectedDate);
+      setState(() {
+        readings = newReadings;
+      });
     }
   }
 
@@ -102,13 +96,12 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-            RichText(text: TextSpan(text: 'TESTING')),
             Html(
-              data: this.readingText,
-            )
+              data: readings.format(),
+            ),
           ])),
       floatingActionButton: FloatingActionButton(
-        onPressed: _chooseReading,
+        onPressed: _chooseReadings,
         tooltip: 'Choose data',
         child: Icon(Icons.date_range),
       ), // This trailing comma makes auto-formatting nicer for build methods.
