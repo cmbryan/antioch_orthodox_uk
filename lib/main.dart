@@ -123,14 +123,19 @@ class ReadingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body: Padding(
+        padding: EdgeInsets.all(25.0),
+        child: SingleChildScrollView(
           child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-            Html(
-              data: state.getReadings(),
-            ),
-          ])),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Html(
+                data: state.getReadings(),
+              ),
+            ],
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: state.chooseReadings,
         tooltip: 'Choose date',
@@ -148,14 +153,19 @@ class SaintsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SingleChildScrollView(
+      body: Padding(
+        padding: EdgeInsets.all(25.0),
+        child: SingleChildScrollView(
           child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-            Html(
-              data: state.getSaints(),
-            ),
-          ])),
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Html(
+                data: state.getSaints(),
+              ),
+            ],
+          ),
+        ),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: state.chooseReadings,
         tooltip: 'Choose date',
