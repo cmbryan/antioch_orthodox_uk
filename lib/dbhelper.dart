@@ -53,7 +53,7 @@ class DbHelper {
 
     // Map of column names to values
     final List<Map<String, dynamic>> map = await this.db.rawQuery('''
-          SELECT lect_1, text_1
+          SELECT date, lect_1, text_1
             FROM yocal_lections
             JOIN yocal_main ON yocal_main.a_code = yocal_lections.code
             WHERE date='$dateStr';
