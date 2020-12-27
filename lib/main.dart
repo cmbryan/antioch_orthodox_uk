@@ -83,6 +83,20 @@ class _MyAppPagesState extends State<MyAppPages> {
     }
   }
 
+  String getReadings() {
+    if (readings != null) {
+      return readings.formatReadings();
+    }
+    return "";
+  }
+
+  String getSaints() {
+    if (readings != null) {
+      return readings.formatSaints();
+    }
+    return "";
+  }
+
   @override
   Widget build(BuildContext context) {
     return PageView(
@@ -114,7 +128,7 @@ class ReadingsPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
             Html(
-              data: state.readings.formatReadings(),
+              data: state.getReadings(),
             ),
           ])),
       floatingActionButton: FloatingActionButton(
@@ -139,7 +153,7 @@ class SaintsPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
             Html(
-              data: state.readings.formatSaints(),
+              data: state.getSaints(),
             ),
           ])),
       floatingActionButton: FloatingActionButton(
