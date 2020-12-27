@@ -25,13 +25,13 @@ class MyApp extends StatelessWidget {
         // closer together (more dense) than on mobile platforms.
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: MyHomePage(title: 'Antioch Orthodox UK'),
+      home: MyAppPages(title: 'Antioch Orthodox UK'),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  MyHomePage({Key key, this.title}) : super(key: key);
+class MyAppPages extends StatefulWidget {
+  MyAppPages({Key key, this.title}) : super(key: key);
 
   // This widget is the home page of your application. It is stateful, meaning
   // that it has a State object (defined below) that contains fields that affect
@@ -45,20 +45,25 @@ class MyHomePage extends StatefulWidget {
   final String title;
 
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyAppPagesState createState() => _MyAppPagesState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyAppPagesState extends State<MyAppPages> {
   DbHelper dbHelper;
   Readings readings;
   DateTime selectedDate = DateTime.now();
 
-  _MyHomePageState() {
-    this.dbHelper = DbHelper();
+  // Control pages
+  PageController _controller = PageController(
+    initialPage: 0,
+  );
+
+  _MyAppPagesState() {
+    dbHelper = DbHelper();
     _displayReadings();
   }
 
-  void _chooseReadings() async {
+  void chooseReadings() async {
     selectedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
@@ -80,31 +85,68 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
+    return PageView(
+      controller: _controller,
+      children: [
+        ReadingsPage(this),
+        SaintsPage(this),
+      ],
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+}
+
+class ReadingsPage extends StatelessWidget {
+  final _MyAppPagesState state;
+
+  ReadingsPage(this.state);
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
-      // appBar: AppBar(
-      //   // Here we take the value from the MyHomePage object that was created by
-      //   // the App.build method, and use it to set our appbar title.
-      //   title: Text(widget.title),
-      // ),
       body: SingleChildScrollView(
           child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
             Html(
-              data: readings.format(),
+              data: state.readings.formatReadings(),
             ),
           ])),
       floatingActionButton: FloatingActionButton(
-        onPressed: _chooseReadings,
-        tooltip: 'Choose data',
+        onPressed: state.chooseReadings,
+        tooltip: 'Choose date',
         child: Icon(Icons.date_range),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
+    );
+  }
+}
+
+class SaintsPage extends StatelessWidget {
+  final _MyAppPagesState state;
+
+  SaintsPage(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SingleChildScrollView(
+          child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+            Html(
+              data: state.readings.formatSaints(),
+            ),
+          ])),
+      floatingActionButton: FloatingActionButton(
+        onPressed: state.chooseReadings,
+        tooltip: 'Choose date',
+        child: Icon(Icons.date_range),
+      ),
     );
   }
 }
