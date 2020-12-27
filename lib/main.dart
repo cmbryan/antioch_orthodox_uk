@@ -55,8 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
   var readingText = 'TODO';
 
   void _chooseReading() async {
-    // Get the readings databse object
     if (this.dbHelper == null) {
+      // Initialize the readings database object
       this.dbHelper = DbHelper();
       await dbHelper.init();
     }
@@ -68,12 +68,19 @@ class _MyHomePageState extends State<MyHomePage> {
       lastDate: DateTime(2030),
     );
 
-    this.readings = await dbHelper.getEpistleReadings(selectedDate);
-
     if (selectedDate != null) {
-      setState(() {
-        this.readingText = this.readings.text;
-      });
+      try {
+        this.readings = await dbHelper.getEpistleReadings(selectedDate);
+        setState(() {
+          this.readingText = this.readings.text;
+        });
+      } catch (err) {
+        print('Error getting Epistle reading: $err');
+        this.readings = null;
+        setState(() {
+          this.readingText = this.readings.text;
+        });
+      }
     }
   }
 
