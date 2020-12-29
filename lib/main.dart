@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:intl/intl.dart';
 
 import 'Readings.dart';
 import 'dbhelper.dart';
@@ -83,6 +84,13 @@ class _MyAppPagesState extends State<MyAppPages> {
     }
   }
 
+  String getTitles() {
+    if (readings != null) {
+      return readings.formatTitles();
+    }
+    return "";
+  }
+
   String getReadings() {
     if (readings != null) {
       return readings.formatReadings();
@@ -102,6 +110,7 @@ class _MyAppPagesState extends State<MyAppPages> {
     return PageView(
       controller: _controller,
       children: [
+        MainPage(this),
         ReadingsPage(this),
         SaintsPage(this),
       ],
@@ -112,6 +121,66 @@ class _MyAppPagesState extends State<MyAppPages> {
   void dispose() {
     _controller.dispose();
     super.dispose();
+  }
+
+  void goToReadingsPage() {
+    _controller.animateToPage(
+      1,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+
+  void goToSaintsPage() {
+    _controller.animateToPage(
+      2,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOut,
+    );
+  }
+}
+
+class MainPage extends StatelessWidget {
+  final _MyAppPagesState state;
+  final format = DateFormat.yMMMMd('en_US');
+
+  MainPage(this.state);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Padding(
+        padding: EdgeInsets.all(25.0),
+        child: ListView(
+          children: [
+            Text(
+              format.format(state.selectedDate),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            GestureDetector(
+              onTap: state.goToReadingsPage,
+              child: Html(
+                data: '<i>Readings:</i><br/>' + state.getTitles(),
+              ),
+            ),
+            GestureDetector(
+              onTap: state.goToSaintsPage,
+              child: Html(
+                data: '<i>Commemorations:</i><br/>' + state.getSaints(),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: state.chooseReadings,
+        tooltip: 'Choose date',
+        child: Icon(Icons.date_range),
+      ),
+    );
   }
 }
 
@@ -135,11 +204,6 @@ class ReadingsPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: state.chooseReadings,
-        tooltip: 'Choose date',
-        child: Icon(Icons.date_range),
       ),
     );
   }
@@ -165,11 +229,6 @@ class SaintsPage extends StatelessWidget {
             ],
           ),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: state.chooseReadings,
-        tooltip: 'Choose date',
-        child: Icon(Icons.date_range),
       ),
     );
   }
