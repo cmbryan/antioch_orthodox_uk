@@ -15,3 +15,9 @@ See [here](https://flutter.dev/docs/deployment/android) for more information.
 Run `flutter build appbundle`. This will create `build/app/outputs/bundle/release/app-release.aab`.
 
 3. Use this to publish the release on the Google play store.
+
+4. Commit the current state to git: `git add -u && git commit -m "..."`
+
+5. Create a tag for this commit: `git tag -af vX.Y.Z -m "..."`
+
+6. Push the commit and the tag: `git push && git push --tags`
