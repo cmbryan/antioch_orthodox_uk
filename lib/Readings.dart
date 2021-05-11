@@ -1,41 +1,45 @@
 class Readings {
-  String ordinand, month;
-  int year;
+  String dateStr;
   List<String> epistleTitles, gospelTitles;
   List<String> epistleReadings, gospelReadings;
-  String saintsGeneral, saintsBritish;
+  String saintsGeneral, saintsBritish, majorCommem;
 
   /// Each element of maps represents a row in the DB.
   /// Each element of a map is column -> value.
   /// Nb. Each row may have both an Epistle and Gospel.
-  Readings.fromMaps(List<Map<String, dynamic>> maps) {
+  Readings.fromMap(Map<String, dynamic> map) {
     /* Date */
-    // It is assumed that every row belongs to the same day
-    ordinand = maps.first['ord'];
-    month = maps.first['month'];
-    year = maps.first['year'];
+    dateStr = map['date_str'];
 
     /* Readings */
-    epistleTitles = List<String>();
-    gospelTitles = List<String>();
-    epistleReadings = List<String>();
-    gospelReadings = List<String>();
-    for (final map in maps) {
-      // Epistle?
-      if (map['lect_1'] != null) {
-        epistleTitles.add(map['lect_1']);
-        epistleReadings.add(map['text_1']);
-      }
-      // Gospel?
-      if (map['lect_2'] != null) {
-        gospelTitles.add(map['lect_2']);
-        gospelReadings.add(map['text_2']);
+    epistleTitles = <String>[];
+    gospelTitles = <String>[];
+    epistleReadings = <String>[];
+    gospelReadings = <String>[];
+
+    for (String key in ['a_lect_1', 'a_lect_2', 'c_lect_1']) {
+      if (map[key] != '') {
+        epistleTitles.add(map[key]);
       }
     }
 
+    for (String key in ['a_text_1', 'a_text_2', 'c_text_1']) {
+      if (map[key] != '') {
+        epistleReadings.add(map[key]);
+      }
+    }
+
+    // for (String key in ['g_lect', 'c_lect_2']) {
+    if (map['g_lect'] != '') {
+      gospelTitles.add(map['g_lect']);
+      gospelReadings.add(map['g_text']);
+    }
+    // }
+
     /* Saints */
-    saintsGeneral = maps.first['class_5'];
-    saintsBritish = maps.first['british'];
+    saintsGeneral = map['general_commem'];
+    saintsBritish = map['british_commem'];
+    majorCommem = map['major_commem'];
   }
 
   String formatTitles() {

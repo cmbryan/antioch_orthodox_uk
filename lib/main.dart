@@ -1,12 +1,14 @@
+import 'dart:async';
+import 'dart:convert';
+
+import 'package:antioch_orthodox_uk/Readings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:http/http.dart' as http;
 import 'package:intl/intl.dart';
 
-import 'Readings.dart';
-import 'dbhelper.dart';
-
 void main() async {
-  // Need to do this before accessing the binary messenger during intialization
+  // Need to do this before accessing the binary messenger during initialization
   WidgetsFlutterBinding.ensureInitialized();
 
   runApp(MyApp());
@@ -50,59 +52,39 @@ class MyAppPages extends StatefulWidget {
 }
 
 class _MyAppPagesState extends State<MyAppPages> {
-  DbHelper dbHelper;
-  Readings readings;
+  Future<Readings> readings;
   DateTime selectedDate = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+    readings = fetchReadings(dateStr);
+  }
 
   // Control pages
   PageController _controller = PageController(
     initialPage: 0,
   );
 
-  _MyAppPagesState() {
-    dbHelper = DbHelper();
-    _displayReadings();
-  }
-
   void chooseReadings() async {
     selectedDate = await showDatePicker(
       context: context,
       initialDate: selectedDate,
-      firstDate: DateTime(2020),
+      firstDate: DateTime(2021),
       lastDate: DateTime(2030),
     );
     _displayReadings();
   }
 
-  void _displayReadings() async {
+  void _displayReadings() {
     if (selectedDate != null) {
-      await dbHelper.init();
-      var newReadings = await dbHelper.getEpistleReadings(selectedDate);
+      final dateStr = DateFormat('yyyy-MM-dd').format(selectedDate);
+      var newReadings = fetchReadings(dateStr);
       setState(() {
         readings = newReadings;
       });
     }
-  }
-
-  String getTitles() {
-    if (readings != null) {
-      return readings.formatTitles();
-    }
-    return "";
-  }
-
-  String getReadings() {
-    if (readings != null) {
-      return readings.formatReadings();
-    }
-    return "";
-  }
-
-  String getSaints() {
-    if (readings != null) {
-      return readings.formatSaints();
-    }
-    return "";
   }
 
   @override
@@ -151,28 +133,39 @@ class MainPage extends StatelessWidget {
     return Scaffold(
       body: Padding(
         padding: EdgeInsets.all(25.0),
-        child: ListView(
-          children: [
-            Text(
-              format.format(state.selectedDate),
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            GestureDetector(
-              onTap: state.goToReadingsPage,
-              child: Html(
-                data: '<i>Readings:</i><br/>' + state.getTitles(),
-              ),
-            ),
-            GestureDetector(
-              onTap: state.goToSaintsPage,
-              child: Html(
-                data: '<i>Commemorations:</i><br/>' + state.getSaints(),
-              ),
-            ),
-          ],
+        child: FutureBuilder<Readings>(
+          future: state.readings,
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              return ListView(
+                children: [
+                  Text(
+                    format.format(state.selectedDate),
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: state.goToReadingsPage,
+                    child: Html(
+                      data: '<i>Readings:</i><br/>' + snapshot.data.formatTitles(),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: state.goToSaintsPage,
+                    child: Html(
+                      data: '<i>Commemorations:</i><br/>' + snapshot.data.formatSaints(),
+                    ),
+                  ),
+                ],
+              );
+            } else if (snapshot.hasError) {
+              return Text("Error: please email to kliros@yorkorthodox.org");
+            } else {
+              return CircularProgressIndicator();
+            }
+          },
         ),
       ),
       floatingActionButton: FloatingActionButton(
@@ -197,9 +190,20 @@ class ReadingsPage extends StatelessWidget {
         child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Html(
-                data: state.getReadings(),
+            children: [
+              FutureBuilder<Readings>(
+                future: state.readings,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Html(
+                      data: snapshot.data.formatReadings(),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text("Error: please email to kliros@yorkorthodox.org");
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                },
               ),
             ],
           ),
@@ -223,13 +227,39 @@ class SaintsPage extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              Html(
-                data: state.getSaints(),
+              FutureBuilder<Readings>(
+                future: state.readings,
+                builder: (context, snapshot) {
+                  if (snapshot.hasData) {
+                    return Html(
+                      data: snapshot.data.formatSaints(),
+                    );
+                  } else if (snapshot.hasError) {
+                    return Text("Error: please email to kliros@yorkorthodox.org");
+                  } else {
+                    return CircularProgressIndicator();
+                  }
+                },
               ),
             ],
           ),
         ),
       ),
     );
+  }
+}
+
+Future<Readings> fetchReadings(String dateStr) async {
+  final response =
+  await http.get(Uri.https('york-orthodox-db-serve.glitch.me', 'data/' + dateStr));
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    return Readings.fromMap(jsonDecode(response.body)[0]);
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load data');
   }
 }
