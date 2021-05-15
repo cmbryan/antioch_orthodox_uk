@@ -1,4 +1,8 @@
-class Readings {
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+class DayInfo {
   String dateStr;
   List<String> epistleTitles, gospelTitles;
   List<String> epistleReadings, gospelReadings;
@@ -7,7 +11,7 @@ class Readings {
   /// Each element of maps represents a row in the DB.
   /// Each element of a map is column -> value.
   /// Nb. Each row may have both an Epistle and Gospel.
-  Readings.fromMap(Map<String, dynamic> map) {
+  DayInfo.fromMap(Map<String, dynamic> map) {
     /* Date */
     dateStr = map['date_str'];
 
@@ -68,5 +72,21 @@ class Readings {
   /// Return all the readings as a single block of html.
   String formatSaints() {
     return saintsGeneral + '<br/>' + saintsBritish;
+  }
+}
+
+/// Create a Readings future for a given date
+Future<DayInfo> fetchReadings(String dateStr) async {
+  final response = await http
+      .get(Uri.https('york-orthodox-db-serve.glitch.me', 'data/' + dateStr));
+
+  if (response.statusCode == 200) {
+    // If the server did return a 200 OK response,
+    // then parse the JSON.
+    return DayInfo.fromMap(jsonDecode(response.body)[0]);
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Failed to load data');
   }
 }
