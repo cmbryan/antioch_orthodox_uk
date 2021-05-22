@@ -4,8 +4,12 @@ import 'package:http/http.dart' as http;
 
 class DayInfo {
   String dateStr;
-  List<String> epistleTitles, gospelTitles;
-  List<String> epistleReadings, gospelReadings;
+  final Map<String, String> epistles = {},
+      gospel = {},
+      commemEpistles = {},
+      commemGospels = {},
+      extras = {};
+  bool isCommemorationEpistle, isCommemorationGospel;
   String saintsGeneral, saintsBritish, majorCommem;
 
   /// Each element of maps represents a row in the DB.
@@ -15,30 +19,31 @@ class DayInfo {
     /* Date */
     dateStr = map['date_str'];
 
-    /* Readings */
-    epistleTitles = <String>[];
-    gospelTitles = <String>[];
-    epistleReadings = <String>[];
-    gospelReadings = <String>[];
+    isCommemorationEpistle = (map['is_comm_apos'] != 1);
+    isCommemorationGospel = (map['is_comm_gosp'] != 1);
 
-    for (String key in ['a_lect_1', 'a_lect_2', 'c_lect_1']) {
-      if (map[key] != '') {
-        epistleTitles.add(map[key]);
-      }
+    /* 'Normal' Readings */
+    epistles[map['a_lect_1']] = map['a_text_1'];
+    if (!_nullOrEmpty(map['a_lect_2'])) {
+      epistles[map['a_lect_2']] = map['a_text_2'];
+    }
+    gospel[map['g_lect']] = map['g_text'];
+
+    /* Commemorations */
+    if (!_nullOrEmpty(map['c_lect_1'])) {
+      commemEpistles[map['c_lect_1']] = map['c_text_1'];
+    }
+    if (!_nullOrEmpty(map['c_lect_2'])) {
+      commemGospels[map['c_lect_2']] = map['c_text_2'];
     }
 
-    for (String key in ['a_text_1', 'a_text_2', 'c_text_1']) {
-      if (map[key] != '') {
-        epistleReadings.add(map[key]);
-      }
+    /* "Extra" */
+    if (!_nullOrEmpty(map['x_lect_1'])) {
+      extras[map['x_lect_1']] = map['x_text_1'];
     }
-
-    // for (String key in ['g_lect', 'c_lect_2']) {
-    if (map['g_lect'] != '') {
-      gospelTitles.add(map['g_lect']);
-      gospelReadings.add(map['g_text']);
+    if (!_nullOrEmpty(map['x_lect_2'])) {
+      extras[map['x_lect_2']] = map['x_text_2'];
     }
-    // }
 
     /* Saints */
     saintsGeneral = map['general_commem'];
@@ -48,24 +53,73 @@ class DayInfo {
 
   String formatTitles() {
     String result = '';
-    for (final title in epistleTitles) {
-      result += title + '<br/>';
+    String tmp;
+    var lineList = [];
+
+    epistles.forEach((key, _) => lineList.add(key));
+    tmp = lineList.join('; ');
+    if (!isCommemorationEpistle) {
+      tmp = '<b>$tmp</b>';
     }
-    for (final title in gospelTitles) {
-      result += title + '<br/>';
+    result += tmp;
+    lineList = [];
+
+    gospel.forEach((key, _) => lineList.add(key));
+    tmp = lineList.join('; ');
+    if (!isCommemorationGospel) {
+      tmp = '<b>$tmp</b>';
     }
+    result += '; $tmp';
+    lineList = [];
+
+    result += '<br/>';
+
+    commemEpistles.forEach((key, _) => lineList.add(key));
+    if (lineList.isNotEmpty) {
+      tmp = lineList.join('; ');
+      if (isCommemorationEpistle) {
+        tmp = '<b>$tmp</b>';
+      }
+      result += '<i>For the commemoration: </i>$tmp';
+      lineList = [];
+    }
+
+    commemGospels.forEach((key, _) => lineList.add(key));
+    if (lineList.isNotEmpty) {
+      tmp = lineList.join('; ');
+      if (isCommemorationGospel) {
+        tmp = '<b>$tmp</b>';
+      }
+      result += '; $tmp<br/>';
+      lineList = [];
+    }
+
+    extras.forEach((key, _) => lineList.add(key));
+    if (lineList.isNotEmpty) {
+      result += lineList.join('; ') + '<br/>';
+    }
+
     return result;
   }
 
   /// Return all the readings as a single block of html.
   String formatReadings() {
     String result = '';
-    for (final reading in epistleReadings) {
-      result += reading + '<br/>';
-    }
-    for (final reading in gospelReadings) {
-      result += reading + '<br/>';
-    }
+    var contentList = [];
+
+    epistles.forEach((_, value) => contentList.add(value));
+    gospel.forEach((_, value) => contentList.add(value));
+    result += contentList.join();
+    contentList = [];
+
+    commemEpistles.forEach((_, value) => contentList.add(value));
+    commemGospels.forEach((_, value) => contentList.add(value));
+    result += contentList.join();
+    contentList = [];
+
+    extras.forEach((_, value) => contentList.add(value));
+    result += contentList.join();
+
     return result;
   }
 
@@ -89,4 +143,8 @@ Future<DayInfo> fetchReadings(String dateStr) async {
     // then throw an exception.
     throw Exception('Failed to load data');
   }
+}
+
+bool _nullOrEmpty(String data) {
+  return data == null || data == '';
 }
